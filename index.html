@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+
+    <meta
+        name="theme-color"
+        content="#bfe7ff"
+    >
+
+    <meta
+        name="mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-capable"
+        content="yes"
+    >
+
+    <meta
+        name="apple-mobile-web-app-status-bar-style"
+        content="default"
+    >
+
+    <meta
+    name="description"
+    content="Một món quà nhỏ 🌷"
+>
+
+<meta
+    name="format-detection"
+    content="telephone=no"
+>
+
+    <title>Một món quà nhỏ</title>
+
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <main
+        id="game"
+        class="game"
+    >
+
+    <!-- ==================================
+     MOBILE STATUS
+=================================== -->
+
+<div
+    id="offlineNotice"
+    class="offline-notice"
+>
+    Mạng đang hơi chập chờn rồi 🌷
+</div>
+
+
+<div
+    id="rotateNotice"
+    class="rotate-notice"
+>
+
+    <div class="rotate-phone">
+        📱
+    </div>
+
+    <div class="rotate-title">
+        Xoay điện thoại lại nè 😆
+    </div>
+
+    <div class="rotate-text">
+        Trò này xem dọc sẽ vui hơn á.
+    </div>
+
+</div>
+
+
+        <!-- ==================================
+             SKY
+        =================================== -->
+
+        <div class="sky"></div>
+
+        <div class="sun-glow"></div>
+
+
+        <!-- ==================================
+             CLOUDS
+        =================================== -->
+
+        <div class="cloud-layer cloud-far">
+
+            <div class="soft-cloud soft-cloud-1"></div>
+
+            <div class="soft-cloud soft-cloud-2"></div>
+
+        </div>
+
+
+        <div class="cloud-layer cloud-near">
+
+            <div class="soft-cloud soft-cloud-3"></div>
+
+        </div>
+
+
+        <!-- ==================================
+             HILLS
+        =================================== -->
+
+        <div class="hill hill-back"></div>
+
+        <div class="hill hill-front"></div>
+
+
+        <!-- ==================================
+             DISTANT FLOWERS
+        =================================== -->
+
+        <div class="distant-flowers">
+
+            <span class="tiny-flower tf-1"></span>
+            <span class="tiny-flower tf-2"></span>
+            <span class="tiny-flower tf-3"></span>
+            <span class="tiny-flower tf-4"></span>
+            <span class="tiny-flower tf-5"></span>
+            <span class="tiny-flower tf-6"></span>
+
+        </div>
+
+
+        <!-- ==================================
+             FENCE
+        =================================== -->
+
+        <div class="fence">
+
+            <span class="fence-rail rail-top"></span>
+            <span class="fence-rail rail-bottom"></span>
+
+            <span class="fence-post post-1"></span>
+            <span class="fence-post post-2"></span>
+            <span class="fence-post post-3"></span>
+            <span class="fence-post post-4"></span>
+            <span class="fence-post post-5"></span>
+
+        </div>
+
+
+        <!-- ==================================
+             FOREGROUND GRASS
+        =================================== -->
+
+        <div class="foreground-grass">
+
+            <span class="grass-clump gc-1"></span>
+            <span class="grass-clump gc-2"></span>
+            <span class="grass-clump gc-3"></span>
+            <span class="grass-clump gc-4"></span>
+            <span class="grass-clump gc-5"></span>
+
+        </div>
+
+
+        <!-- ==================================
+             PETAL LAYER
+        =================================== -->
+
+        <div
+            id="petalLayer"
+            class="petal-layer"
+        ></div>
+
+
+        <!-- ==================================
+             FLOWER BUSH
+        =================================== -->
+
+        <div
+            id="flowerBush"
+            class="flower-bush hidden"
+        >
+
+            <span class="leaf leaf-1"></span>
+            <span class="leaf leaf-2"></span>
+            <span class="leaf leaf-3"></span>
+
+            <span class="flower flower-1">🌼</span>
+            <span class="flower flower-2">🌷</span>
+            <span class="flower flower-3">🌸</span>
+
+        </div>
+
+
+        <!-- ==================================
+             FINAL GARDEN
+        =================================== -->
+
+        <div
+            id="garden"
+            class="garden hidden"
+        >
+
+
+            <div class="css-flower flower-01 flower-pink">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+            <div class="css-flower flower-02 flower-yellow">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+            <div class="css-flower flower-03 flower-purple">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+            <div class="css-flower flower-04 flower-white">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+            <div class="css-flower flower-05 flower-pink">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+            <div class="css-flower flower-06 flower-blue">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+            <div class="css-flower flower-07 flower-yellow">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+            <div class="css-flower flower-08 flower-purple">
+
+                <span class="flower-stem">
+
+                    <span class="flower-leaf leaf-left"></span>
+
+                    <span class="flower-leaf leaf-right"></span>
+
+                </span>
+
+                <span class="flower-bloom">
+
+                    <i class="petal petal-1"></i>
+                    <i class="petal petal-2"></i>
+                    <i class="petal petal-3"></i>
+                    <i class="petal petal-4"></i>
+                    <i class="petal petal-5"></i>
+
+                    <i class="flower-center"></i>
+
+                </span>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ==================================
+             GIFT GLOW
+        =================================== -->
+
+        <div
+            id="giftGlow"
+            class="gift-glow hidden"
+        ></div>
+
+
+        <!-- ==================================
+             PARTICLES
+        =================================== -->
+
+        <div
+            id="particles"
+            class="particles"
+        ></div>
+
+        <!-- ==================================
+     TAP EFFECT
+=================================== -->
+
+<div
+    id="tapLayer"
+    class="tap-layer"
+></div>
+
+
+        <!-- ==================================
+             BUTTERFLY
+        =================================== -->
+
+        <div
+            id="butterfly"
+            class="butterfly hidden"
+        >
+
+            <span class="butterfly-body"></span>
+
+            <span
+                class="
+                    butterfly-wing
+                    butterfly-wing-left
+                "
+            ></span>
+
+            <span
+                class="
+                    butterfly-wing
+                    butterfly-wing-right
+                "
+            ></span>
+
+        </div>
+
+
+        <!-- ==================================
+             CAT
+        =================================== -->
+
+        <button
+            id="cat"
+            class="cat hidden mood-curious"
+            type="button"
+            aria-label="Bắt mèo"
+        >
+
+            <span class="cat-shadow"></span>
+
+            <span class="cat-tail"></span>
+
+            <span
+                class="
+                    cat-leg
+                    cat-leg-back-left
+                "
+            ></span>
+
+            <span
+                class="
+                    cat-leg
+                    cat-leg-back-right
+                "
+            ></span>
+
+
+            <span class="cat-body">
+
+                <span class="cat-belly"></span>
+
+
+                <span
+                    class="
+                        cat-leg
+                        cat-leg-front-left
+                    "
+                ></span>
+
+                <span
+                    class="
+                        cat-leg
+                        cat-leg-front-right
+                    "
+                ></span>
+
+
+                <span class="cat-head">
+
+                    <span
+                        class="
+                            cat-ear
+                            cat-ear-left
+                        "
+                    >
+
+                        <span class="cat-ear-inner"></span>
+
+                    </span>
+
+
+                    <span
+                        class="
+                            cat-ear
+                            cat-ear-right
+                        "
+                    >
+
+                        <span class="cat-ear-inner"></span>
+
+                    </span>
+
+
+                    <span class="cat-face">
+
+                        <span
+                            class="
+                                cat-eye
+                                cat-eye-left
+                            "
+                        >
+
+                            <span class="cat-eye-shine"></span>
+
+                        </span>
+
+
+                        <span
+                            class="
+                                cat-eye
+                                cat-eye-right
+                            "
+                        >
+
+                            <span class="cat-eye-shine"></span>
+
+                        </span>
+
+
+                        <span
+                            class="
+                                cat-blush
+                                cat-blush-left
+                            "
+                        ></span>
+
+                        <span
+                            class="
+                                cat-blush
+                                cat-blush-right
+                            "
+                        ></span>
+
+
+                        <span class="cat-nose"></span>
+
+                        <span class="cat-mouth"></span>
+
+
+                        <span
+                            class="
+                                whisker
+                                whisker-l1
+                            "
+                        ></span>
+
+                        <span
+                            class="
+                                whisker
+                                whisker-l2
+                            "
+                        ></span>
+
+                        <span
+                            class="
+                                whisker
+                                whisker-r1
+                            "
+                        ></span>
+
+                        <span
+                            class="
+                                whisker
+                                whisker-r2
+                            "
+                        ></span>
+
+                    </span>
+
+                </span>
+
+            </span>
+
+        </button>
+
+        <!-- ==================================
+     LANDING BUTTERFLY
+=================================== -->
+
+<div
+    id="landingButterfly"
+    class="landing-butterfly hidden"
+>
+
+    <span class="butterfly-body"></span>
+
+    <span
+        class="
+            butterfly-wing
+            butterfly-wing-left
+        "
+    ></span>
+
+    <span
+        class="
+            butterfly-wing
+            butterfly-wing-right
+        "
+    ></span>
+
+</div>
+
+
+        <!-- ==================================
+             SPEECH
+        =================================== -->
+
+        <div
+            id="speech"
+            class="speech hidden"
+            aria-live="polite"
+        >
+            Ủa...
+        </div>
+
+
+        <!-- ==================================
+             HINT
+        =================================== -->
+
+        <div
+            id="hint"
+            class="hint hidden"
+        >
+            bắt được tui đi 😝
+        </div>
+
+
+        <!-- ==================================
+             GIFT
+        =================================== -->
+
+        <button
+            id="giftBox"
+            class="gift-box hidden"
+            type="button"
+            aria-label="Mở hộp quà"
+        >
+            🎁
+        </button>
+
+
+        <!-- ==================================
+     FINAL SCENE
+=================================== -->
+
+<section
+    id="finalCard"
+    class="final-card hidden"
+>
+
+    <div class="final-scene">
+
+        <!-- butterfly landing -->
+
+        <!-- letter -->
+        <div
+            id="finalLetter"
+            class="final-letter"
+        >
+
+            <div class="letter-flower">
+                🌷
+            </div>
+
+            <div
+                class="
+                    final-line
+                    final-line-1
+                "
+            >
+                Bắt được rồi nha 😆
+            </div>
+
+            <div
+                class="
+                    final-line
+                    final-line-2
+                "
+            >
+                Quà của bà đây.
+            </div>
+
+            <div
+                class="
+                    final-line
+                    final-line-3
+                "
+            >
+                Chúc bà hôm nay
+            </div>
+
+            <div
+                class="
+                    final-line
+                    final-line-4
+                "
+            >
+                gặp thật nhiều chuyện vui 🌷
+            </div>
+
+
+            <button
+                id="replayButton"
+                class="replay-button"
+                type="button"
+            >
+                CHƠI LẠI
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+        <!-- ==================================
+             INTRO
+        =================================== -->
+
+        <section
+            id="intro"
+            class="intro"
+        >
+
+            <div class="intro-card">
+
+                <div class="intro-icon">
+                    🌷
+                </div>
+
+
+                <div class="intro-title">
+                    Có cái này vui nè...
+                </div>
+
+
+                <div class="intro-subtitle">
+                    bấm thử xem 👀
+                </div>
+
+
+                <button
+                    id="startButton"
+                    class="start-button"
+                    type="button"
+                >
+                    MỞ THỬ XEM
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================
+             SOUND BUTTON
+        =================================== -->
+
+        <button
+            id="soundButton"
+            class="sound-button"
+            type="button"
+            aria-label="Bật tắt âm thanh"
+        >
+            🔊
+        </button>
+
+
+        <!-- ==================================
+             AUDIO
+        =================================== -->
+
+        <audio
+            id="bgm"
+            preload="auto"
+            loop
+        >
+            <source
+                src="./assets/audio/bgm.mp3"
+                type="audio/mpeg"
+            >
+        </audio>
+
+
+        <audio id="sfxPop" preload="auto">
+
+            <source
+                src="./assets/audio/pop.mp3"
+                type="audio/mpeg"
+            >
+
+        </audio>
+
+
+        <audio id="sfxRun" preload="auto">
+
+            <source
+                src="./assets/audio/run.mp3"
+                type="audio/mpeg"
+            >
+
+        </audio>
+
+
+        <audio id="sfxSlip" preload="auto">
+
+            <source
+                src="./assets/audio/slip.mp3"
+                type="audio/mpeg"
+            >
+
+        </audio>
+
+
+        <audio id="sfxBoing" preload="auto">
+
+            <source
+                src="./assets/audio/boing.mp3"
+                type="audio/mpeg"
+            >
+
+        </audio>
+
+
+        <audio
+            id="sfxGiftDrop"
+            preload="auto"
+        >
+
+            <source
+                src="./assets/audio/gift-drop.mp3"
+                type="audio/mpeg"
+            >
+
+        </audio>
+
+
+        <audio
+            id="sfxSparkle"
+            preload="auto"
+        >
+
+            <source
+                src="./assets/audio/sparkle.mp3"
+                type="audio/mpeg"
+            >
+
+        </audio>
+
+
+        <audio
+            id="sfxButterfly"
+            preload="auto"
+        >
+
+            <source
+                src="./assets/audio/butterfly.mp3"
+                type="audio/mpeg"
+            >
+
+        </audio>
+
+
+    </main>
+
+
+    <script src="./js/app.js"></script>
+
+
+</body>
+
+</html>
