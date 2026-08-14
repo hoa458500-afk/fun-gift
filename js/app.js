@@ -253,7 +253,12 @@ function startGame() {
         true;
 
 
-    unlockAudio();
+    /*
+     * PHẢI chạy ngay trong cú bấm
+     * MỞ THỬ XEM.
+     */
+
+    startBGM();
 
 
     startPetals();
@@ -1427,7 +1432,7 @@ function openGift() {
     ) {
 
         bgm.volume =
-            0.12;
+            0.28;
     }
 
 
@@ -1860,7 +1865,7 @@ function showFinalCard() {
     ) {
 
         bgm.volume =
-            0.17;
+            0.36;
 
     }
 
@@ -3209,41 +3214,11 @@ function createMagicStars() {
 
 function unlockAudio() {
 
-    if (audioUnlocked) {
-
-        if (
-            soundEnabled &&
-            bgm &&
-            bgm.paused
-        ) {
-
-            bgm.play().catch(
-                () => {}
-            );
-        }
-
-
-        return;
-    }
-
-
     audioUnlocked =
         true;
 
 
-    if (!bgm) return;
-
-
-    bgm.volume =
-        0.22;
-
-
-    if (!soundEnabled) return;
-
-
-    bgm.play().catch(
-        () => {}
-    );
+    startBGM();
 
 }
 
@@ -3307,18 +3282,10 @@ function toggleSound() {
         );
 
 
-        if (
-            audioUnlocked &&
-            bgm
-        ) {
+        if (started) {
 
-            bgm.volume =
-                0.22;
+            startBGM();
 
-
-            bgm.play().catch(
-                () => {}
-            );
         }
 
     }
@@ -3337,7 +3304,87 @@ function toggleSound() {
         if (bgm) {
 
             bgm.pause();
+
         }
+
+    }
+
+}
+
+/* ==========================================
+   START BACKGROUND MUSIC
+========================================== */
+
+function startBGM() {
+
+    if (!bgm) {
+
+        console.warn(
+            "Không tìm thấy bgm"
+        );
+
+        return;
+    }
+
+
+    if (!soundEnabled) {
+
+        return;
+    }
+
+
+    /*
+     * Tăng âm lượng.
+     *
+     * 0.22 trước đây hơi nhỏ.
+     */
+
+    bgm.volume =
+        0.42;
+
+
+    /*
+     * Nếu nhạc đã chạy rồi
+     * thì không restart.
+     */
+
+    if (!bgm.paused) {
+
+        return;
+    }
+
+
+    const promise =
+        bgm.play();
+
+
+    if (
+        promise &&
+        typeof promise.then ===
+        "function"
+    ) {
+
+        promise
+            .then(() => {
+
+                audioUnlocked =
+                    true;
+
+
+                console.log(
+                    "BGM started"
+                );
+
+            })
+
+            .catch(error => {
+
+                console.warn(
+                    "BGM không phát:",
+                    error
+                );
+
+            });
 
     }
 
