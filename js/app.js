@@ -222,21 +222,84 @@ const CAT_MOODS = [
 
 
 /* ==========================================
-   START
+   START BUTTON
+   IMPORTANT: unlock BGM directly
 ========================================== */
 
 startButton.addEventListener(
-    "pointerdown",
+    "click",
     event => {
 
         event.preventDefault();
-
         event.stopPropagation();
 
-        createTapEffect(
-    event.clientX,
-    event.clientY
-);
+
+        if (started) {
+
+            return;
+        }
+
+
+        /*
+         * Mobile browser audio unlock
+         *
+         * Phải gọi play() trực tiếp
+         * trong thao tác click của người dùng.
+         */
+
+        if (
+            bgm &&
+            soundEnabled
+        ) {
+
+            bgm.volume =
+                0.42;
+
+
+            bgm.currentTime =
+                0;
+
+
+            const playPromise =
+                bgm.play();
+
+
+            if (
+                playPromise &&
+                typeof playPromise.then ===
+                "function"
+            ) {
+
+                playPromise
+                    .then(() => {
+
+                        audioUnlocked =
+                            true;
+
+
+                        console.log(
+                            "BGM unlocked successfully"
+                        );
+
+                    })
+                    .catch(error => {
+
+                        console.warn(
+                            "BGM blocked:",
+                            error
+                        );
+
+                    });
+
+            }
+
+        }
+
+
+        /*
+         * Sau khi đã gọi play()
+         * mới bắt đầu game.
+         */
 
         startGame();
 
@@ -244,9 +307,16 @@ startButton.addEventListener(
 );
 
 
+/* ==========================================
+   START GAME
+========================================== */
+
 function startGame() {
 
-    if (started) return;
+    if (started) {
+
+        return;
+    }
 
 
     started =
@@ -254,11 +324,11 @@ function startGame() {
 
 
     /*
-     * PHẢI chạy ngay trong cú bấm
-     * MỞ THỬ XEM.
+     * BGM đã được gọi trực tiếp
+     * từ click của startButton.
+     *
+     * Không gọi play() lại ở đây.
      */
-
-    startBGM();
 
 
     startPetals();
@@ -3265,11 +3335,19 @@ function playSFX(
 
 
 
+/* ==========================================
+   TOGGLE SOUND
+========================================== */
+
 function toggleSound() {
 
     soundEnabled =
         !soundEnabled;
 
+
+    /*
+     * SOUND ON
+     */
 
     if (soundEnabled) {
 
@@ -3289,6 +3367,11 @@ function toggleSound() {
         }
 
     }
+
+
+    /*
+     * SOUND OFF
+     */
 
     else {
 
@@ -3312,16 +3395,12 @@ function toggleSound() {
 }
 
 /* ==========================================
-   START BACKGROUND MUSIC
+   START BGM
 ========================================== */
 
 function startBGM() {
 
     if (!bgm) {
-
-        console.warn(
-            "Không tìm thấy bgm"
-        );
 
         return;
     }
@@ -3333,60 +3412,38 @@ function startBGM() {
     }
 
 
-    /*
-     * Tăng âm lượng.
-     *
-     * 0.22 trước đây hơi nhỏ.
-     */
-
     bgm.volume =
         0.42;
 
 
     /*
-     * Nếu nhạc đã chạy rồi
-     * thì không restart.
+     * Nếu đang chạy rồi
+     * thì không restart bài nhạc.
      */
 
-    if (!bgm.paused) {
+    if (
+        !bgm.paused
+    ) {
 
         return;
     }
 
 
-    const promise =
-        bgm.play();
+    bgm.play()
+        .then(() => {
 
+            audioUnlocked =
+                true;
 
-    if (
-        promise &&
-        typeof promise.then ===
-        "function"
-    ) {
+        })
+        .catch(error => {
 
-        promise
-            .then(() => {
+            console.warn(
+                "BGM play failed:",
+                error
+            );
 
-                audioUnlocked =
-                    true;
-
-
-                console.log(
-                    "BGM started"
-                );
-
-            })
-
-            .catch(error => {
-
-                console.warn(
-                    "BGM không phát:",
-                    error
-                );
-
-            });
-
-    }
+        });
 
 }
 
@@ -3397,24 +3454,12 @@ function startBGM() {
 ========================================== */
 
 soundButton.addEventListener(
-    "pointerdown",
+    "click",
     event => {
 
         event.preventDefault();
 
         event.stopPropagation();
-
-
-        /*
-         * Nếu chưa bắt đầu game,
-         * cú chạm này cũng là user gesture.
-         */
-
-        if (!audioUnlocked) {
-
-            audioUnlocked =
-                true;
-        }
 
 
         toggleSound();
