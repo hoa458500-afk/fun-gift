@@ -2,7 +2,7 @@
  * ==========================================
  * FUN GIFT
  * Mobile Cat Chase
- * Build 007
+ * Build 010 - Final
  * ==========================================
  */
 
@@ -39,12 +39,20 @@ const particles =
     document.getElementById("particles");
 
 
+const tapLayer =
+    document.getElementById("tapLayer");
+
+
 const flowerBush =
     document.getElementById("flowerBush");
 
 
 const butterfly =
     document.getElementById("butterfly");
+
+
+const landingButterfly =
+    document.getElementById("landingButterfly");
 
 
 const giftBox =
@@ -62,10 +70,9 @@ const garden =
 const finalCard =
     document.getElementById("finalCard");
 
-    const finalLetter =
-    document.getElementById(
-        "finalLetter"
-    );
+
+const finalLetter =
+    document.getElementById("finalLetter");
 
 
 const replayButton =
@@ -75,20 +82,13 @@ const replayButton =
 const petalLayer =
     document.getElementById("petalLayer");
 
-    const tapLayer =
-    document.getElementById(
-        "tapLayer"
-    );
-
-
-const landingButterfly =
-    document.getElementById(
-        "landingButterfly"
-    );
-
 
 const soundButton =
     document.getElementById("soundButton");
+
+
+const offlineNotice =
+    document.getElementById("offlineNotice");
 
 
 
@@ -125,9 +125,38 @@ const sfxSparkle =
 
 
 const sfxButterfly =
-    document.getElementById(
-        "sfxButterfly"
-    );
+    document.getElementById("sfxButterfly");
+
+
+const AUDIO_FILES = [
+
+    bgm,
+    sfxPop,
+    sfxRun,
+    sfxSlip,
+    sfxBoing,
+    sfxGiftDrop,
+    sfxSparkle,
+    sfxButterfly
+
+];
+
+
+
+/* ==========================================
+   AUDIO VOLUMES
+========================================== */
+
+const BGM_VOLUME_NORMAL =
+    0.42;
+
+
+const BGM_VOLUME_GIFT =
+    0.28;
+
+
+const BGM_VOLUME_FINAL =
+    0.36;
 
 
 
@@ -156,11 +185,11 @@ let giftStage =
 
 
 /*
-0 = chưa chạm gift
-1 = mèo ngồi trên gift
-2 = mèo bị hất
-3 = gift mở
-4 = final
+0 = chưa đụng hộp
+1 = mèo đang ngồi trên hộp
+2 = mèo đã bị hất xuống
+3 = hộp đang mở
+4 = cảnh cuối
 */
 
 
@@ -180,6 +209,10 @@ let nearReactionCooldown =
     false;
 
 
+let missCount =
+    0;
+
+
 let petalRunning =
     false;
 
@@ -191,14 +224,20 @@ let petalTimer =
 let butterflyFollowTimer =
     null;
 
-let missCount =
-    0;
+
+let speechFollowFrame =
+    null;
+
 
 let lastInteractionTime =
     0;
 
-   let speechFollowFrame = null;
-    
+
+let resizeTimer =
+    null;
+
+
+
 /* ==========================================
    CAT MOODS
 ========================================== */
@@ -222,8 +261,44 @@ const CAT_MOODS = [
 
 
 /* ==========================================
+   PRELOAD AUDIO
+========================================== */
+
+function preloadAudio() {
+
+    AUDIO_FILES.forEach(
+        audio => {
+
+            if (!audio) {
+
+                return;
+            }
+
+
+            try {
+
+                audio.load();
+
+            }
+
+            catch (error) {
+
+                // Không làm game bị lỗi nếu audio load thất bại.
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/* ==========================================
    START BUTTON
-   IMPORTANT: unlock BGM directly
+   QUAN TRỌNG:
+   BGM PLAY PHẢI CHẠY TRỰC TIẾP
+   TRONG USER CLICK.
 ========================================== */
 
 startButton.addEventListener(
@@ -231,6 +306,7 @@ startButton.addEventListener(
     event => {
 
         event.preventDefault();
+
         event.stopPropagation();
 
 
@@ -241,10 +317,7 @@ startButton.addEventListener(
 
 
         /*
-         * Mobile browser audio unlock
-         *
-         * Phải gọi play() trực tiếp
-         * trong thao tác click của người dùng.
+         * Unlock + phát BGM trực tiếp.
          */
 
         if (
@@ -253,7 +326,7 @@ startButton.addEventListener(
         ) {
 
             bgm.volume =
-                0.42;
+                BGM_VOLUME_NORMAL;
 
 
             bgm.currentTime =
@@ -278,7 +351,7 @@ startButton.addEventListener(
 
 
                         console.log(
-                            "BGM unlocked successfully"
+                            "BGM started successfully."
                         );
 
                     })
@@ -297,7 +370,7 @@ startButton.addEventListener(
 
 
         /*
-         * Sau khi đã gọi play()
+         * Sau khi yêu cầu play nhạc,
          * mới bắt đầu game.
          */
 
@@ -305,6 +378,7 @@ startButton.addEventListener(
 
     }
 );
+
 
 
 /* ==========================================
@@ -321,14 +395,6 @@ function startGame() {
 
     started =
         true;
-
-
-    /*
-     * BGM đã được gọi trực tiếp
-     * từ click của startButton.
-     *
-     * Không gọi play() lại ở đây.
-     */
 
 
     startPetals();
@@ -414,6 +480,7 @@ cat.addEventListener(
     event => {
 
         event.preventDefault();
+
         event.stopPropagation();
 
 
@@ -425,21 +492,22 @@ cat.addEventListener(
 
         /*
          * QUAN TRỌNG:
-         * Nếu mèo đang ngồi trên hộp quà
-         * thì ưu tiên tuyệt đối việc hất mèo xuống.
+         *
+         * Khi mèo đang ngồi trên hộp,
+         * phải ưu tiên xử lý cú bấm này.
+         *
+         * Không kiểm tra isBusy/gameFinished trước.
          */
 
-        if (giftStage === 1) {
+        if (
+            giftStage === 1
+        ) {
 
             knockCatOffGift();
 
             return;
         }
 
-
-        /*
-         * Chặn double tap cho gameplay bình thường.
-         */
 
         if (
             !allowInteraction(180)
@@ -449,9 +517,16 @@ cat.addEventListener(
         }
 
 
-        if (isBusy) return;
+        if (isBusy) {
 
-        if (gameFinished) return;
+            return;
+        }
+
+
+        if (gameFinished) {
+
+            return;
+        }
 
 
         catchCount++;
@@ -492,19 +567,24 @@ cat.addEventListener(
                 finalCatScene();
 
                 break;
+
         }
 
     }
 );
 
 
+
 /* ==========================================
-   NORMAL ESCAPE
+   ESCAPE NORMAL
 ========================================== */
 
 function escapeNormal() {
 
-    if (isBusy) return;
+    if (isBusy) {
+
+        return;
+    }
 
 
     isBusy =
@@ -551,11 +631,6 @@ function escapeNormal() {
     );
 
 
-    followSpeechDuringMotion(
-        600
-    );
-
-
     setTimeout(() => {
 
         cat.classList.remove(
@@ -579,12 +654,15 @@ function escapeNormal() {
 
 
 /* ==========================================
-   SLIP
+   SLIP ESCAPE
 ========================================== */
 
 function slipEscape() {
 
-    if (isBusy) return;
+    if (isBusy) {
+
+        return;
+    }
 
 
     isBusy =
@@ -626,19 +704,17 @@ function slipEscape() {
 
 
     setCatPosition(
+
         random(
             46,
             70
         ),
+
         random(
             46,
             61
         )
-    );
 
-
-    followSpeechDuringMotion(
-        520
     );
 
 
@@ -709,7 +785,10 @@ function slipEscape() {
 
 function hideInFlowers() {
 
-    if (isBusy) return;
+    if (isBusy) {
+
+        return;
+    }
 
 
     isBusy =
@@ -751,13 +830,17 @@ function hideInFlowers() {
 
 
         const x =
+
             bushRect.left -
             gameRect.left +
+
             bushRect.width / 2 -
+
             cat.offsetWidth / 2;
 
 
         const y =
+
             bushRect.top -
             gameRect.top -
             15;
@@ -777,11 +860,6 @@ function hideInFlowers() {
         setCatPixelPosition(
             x,
             y
-        );
-
-
-        followSpeechDuringMotion(
-            560
         );
 
     });
@@ -839,7 +917,10 @@ function hideInFlowers() {
 
 function butterflyScene() {
 
-    if (isBusy) return;
+    if (isBusy) {
+
+        return;
+    }
 
 
     isBusy =
@@ -903,6 +984,11 @@ function butterflyScene() {
                     butterflyFollowTimer
                 );
 
+
+                butterflyFollowTimer =
+                    null;
+
+
                 return;
             }
 
@@ -912,6 +998,7 @@ function butterflyScene() {
 
 
             lookAtPoint(
+
                 rect.left +
                 rect.width / 2,
 
@@ -919,6 +1006,7 @@ function butterflyScene() {
                 rect.height / 2,
 
                 false
+
             );
 
         }, 90);
@@ -939,6 +1027,10 @@ function butterflyScene() {
         clearInterval(
             butterflyFollowTimer
         );
+
+
+        butterflyFollowTimer =
+            null;
 
 
         butterfly.classList.remove(
@@ -980,7 +1072,10 @@ function butterflyScene() {
 
 function finalCatScene() {
 
-    if (gameFinished) return;
+    if (gameFinished) {
+
+        return;
+    }
 
 
     gameFinished =
@@ -1027,11 +1122,6 @@ function finalCatScene() {
     );
 
 
-    followSpeechDuringMotion(
-        600
-    );
-
-
     setTimeout(() => {
 
         showSpeech(
@@ -1067,6 +1157,10 @@ function finalCatScene() {
 ========================================== */
 
 function dropGift() {
+
+    giftBox.style.pointerEvents =
+        "auto";
+
 
     giftBox.classList.remove(
         "opening",
@@ -1139,6 +1233,7 @@ giftBox.addEventListener(
 
         event.stopPropagation();
 
+
         createTapEffect(
             event.clientX,
             event.clientY
@@ -1146,16 +1241,26 @@ giftBox.addEventListener(
 
 
         if (
-    !allowInteraction(
-        220
-    )
-) {
+            !allowInteraction(220)
+        ) {
 
-    return;
-}
+            return;
+        }
 
 
-        if (giftStage !== 0) {
+        if (
+            !giftBox.classList.contains(
+                "show"
+            )
+        ) {
+
+            return;
+        }
+
+
+        if (
+            giftStage !== 0
+        ) {
 
             return;
         }
@@ -1173,7 +1278,7 @@ giftBox.addEventListener(
 
 
 /* ==========================================
-   FAKE GIFT OPEN
+   FAKE OPEN
 ========================================== */
 
 function fakeGiftOpen() {
@@ -1234,15 +1339,20 @@ function moveCatToGift() {
 
 
     const x =
+
         giftRect.left -
         gameRect.left +
+
         giftRect.width / 2 -
+
         catWidth / 2;
 
 
     const y =
+
         giftRect.top -
         gameRect.top -
+
         catHeight +
         28;
 
@@ -1258,10 +1368,6 @@ function moveCatToGift() {
     );
 
 
-    /*
-     * Đưa mèo đến hộp
-     */
-
     setCatPixelPosition(
         x,
         y
@@ -1269,7 +1375,7 @@ function moveCatToGift() {
 
 
     /*
-     * Mèo phải nhận được touch.
+     * Mèo phải nằm trên hộp và bắt touch.
      */
 
     cat.style.pointerEvents =
@@ -1281,8 +1387,7 @@ function moveCatToGift() {
 
 
     /*
-     * Khi mèo đã chiếm hộp,
-     * hộp không được bắt touch nữa.
+     * Không cho giftBox giành cú touch.
      */
 
     giftBox.style.pointerEvents =
@@ -1323,16 +1428,13 @@ function moveCatToGift() {
 
 function knockCatOffGift() {
 
-    if (giftStage !== 1) {
+    if (
+        giftStage !== 1
+    ) {
 
         return;
     }
 
-
-    /*
-     * Đổi state ngay lập tức
-     * để không bị click lần 2.
-     */
 
     giftStage =
         2;
@@ -1364,10 +1466,6 @@ function knockCatOffGift() {
     );
 
 
-    /*
-     * Rời khỏi hộp.
-     */
-
     cat.classList.remove(
         "on-gift"
     );
@@ -1387,14 +1485,6 @@ function knockCatOffGift() {
     );
 
 
-    /*
-     * Sau khi mèo đã bị hất,
-     * hộp có thể nhận touch trở lại.
-     *
-     * Tuy nhiên giftStage = 2
-     * nên không thể kích hoạt fake-open lần nữa.
-     */
-
     giftBox.style.pointerEvents =
         "auto";
 
@@ -1409,10 +1499,6 @@ function knockCatOffGift() {
         cat.style.transition =
             "none";
 
-
-        /*
-         * Đặt mèo xuống góc trái.
-         */
 
         setCatPosition(
             5,
@@ -1457,10 +1543,6 @@ function knockCatOffGift() {
     }, 1400);
 
 
-    /*
-     * Tự mở hộp sau khi mèo rơi xuống.
-     */
-
     setTimeout(() => {
 
         cat.style.transform =
@@ -1474,13 +1556,19 @@ function knockCatOffGift() {
 }
 
 
+
 /* ==========================================
    OPEN GIFT
 ========================================== */
 
 function openGift() {
 
-    if (giftStage >= 3) return;
+    if (
+        giftStage >= 3
+    ) {
+
+        return;
+    }
 
 
     giftStage =
@@ -1496,14 +1584,13 @@ function openGift() {
     );
 
 
-    if (
-        bgm &&
-        soundEnabled
-    ) {
+    /*
+     * Nhạc nhỏ lại khi mở quà.
+     */
 
-        bgm.volume =
-            0.28;
-    }
+    setBGMVolume(
+        BGM_VOLUME_GIFT
+    );
 
 
     giftBox.classList.remove(
@@ -1599,9 +1686,9 @@ function openGift() {
 
     setTimeout(() => {
 
-    showFinalCard();
+        showFinalCard();
 
-}, 3200);
+    }, 3200);
 
 }
 
@@ -1668,7 +1755,7 @@ function revealGarden() {
 
 
 /* ==========================================
-   FINAL BUTTERFLIES
+   FINAL DYNAMIC BUTTERFLIES
 ========================================== */
 
 function showFinalButterflies() {
@@ -1769,6 +1856,7 @@ function createDynamicButterfly(
 
 
     el.style.transition =
+
         `
         left ${duration}ms cubic-bezier(.35,.05,.55,1),
         top ${duration}ms cubic-bezier(.3,.1,.6,1),
@@ -1834,17 +1922,15 @@ function showFinalCard() {
     resetCatLook();
 
 
-    /*
-     * Cat final pose
-     */
-
     cat.classList.remove(
+
         "running",
         "slipping",
         "peek",
         "hiding",
         "cat-boing",
         "on-gift"
+
     );
 
 
@@ -1853,18 +1939,9 @@ function showFinalCard() {
     );
 
 
-    /*
-     * Mèo nằm phía dưới bên trái.
-     */
-
     setCatPosition(
         7,
         71
-    );
-
-
-    followSpeechDuringMotion(
-        650
     );
 
 
@@ -1876,10 +1953,6 @@ function showFinalCard() {
 
     }, 650);
 
-
-    /*
-     * Show letter
-     */
 
     finalCard.classList.remove(
         "hidden",
@@ -1895,10 +1968,6 @@ function showFinalCard() {
     );
 
 
-    /*
-     * Small final sparkle
-     */
-
     setTimeout(() => {
 
         createConfetti(
@@ -1909,7 +1978,7 @@ function showFinalCard() {
 
 
     /*
-     * Butterfly approaches
+     * Bướm đáp đầu mèo.
      */
 
     setTimeout(() => {
@@ -1926,16 +1995,356 @@ function showFinalCard() {
 
 
     /*
-     * Background music
+     * Tăng nhạc lại nhẹ nhàng.
      */
 
+    setBGMVolume(
+        BGM_VOLUME_FINAL
+    );
+
+}
+
+
+
+/* ==========================================
+   BUTTERFLY LAND ON CAT
+========================================== */
+
+function butterflyLandOnCat() {
+
     if (
-        bgm &&
-        soundEnabled
+        !landingButterfly
     ) {
 
-        bgm.volume =
-            0.36;
+        return;
+    }
+
+
+    const gameRect =
+        game.getBoundingClientRect();
+
+
+    landingButterfly.classList.remove(
+
+        "hidden",
+        "landed",
+        "flying"
+
+    );
+
+
+    landingButterfly.style.left =
+        `${gameRect.width + 50}px`;
+
+
+    landingButterfly.style.top =
+        `${gameRect.height * 0.25}px`;
+
+
+    landingButterfly.style.transform =
+        "rotate(-15deg) scale(0.75)";
+
+
+    void landingButterfly.offsetWidth;
+
+
+    landingButterfly.classList.add(
+        "flying"
+    );
+
+
+    requestAnimationFrame(() => {
+
+        const catRect =
+            cat.getBoundingClientRect();
+
+
+        const currentGameRect =
+            game.getBoundingClientRect();
+
+
+        const targetX =
+
+            catRect.left -
+            currentGameRect.left +
+
+            catRect.width * 0.46 -
+
+            landingButterfly.offsetWidth / 2;
+
+
+        const targetY =
+
+            catRect.top -
+            currentGameRect.top -
+            24;
+
+
+        landingButterfly.style.left =
+            `${targetX}px`;
+
+
+        landingButterfly.style.top =
+            `${targetY}px`;
+
+
+        landingButterfly.style.transform =
+            "rotate(2deg) scale(0.72)";
+
+    });
+
+
+    const tracking =
+        setInterval(() => {
+
+            const rect =
+                landingButterfly
+                    .getBoundingClientRect();
+
+
+            lookAtPoint(
+
+                rect.left +
+                rect.width / 2,
+
+                rect.top +
+                rect.height / 2,
+
+                false
+
+            );
+
+        }, 80);
+
+
+    setTimeout(() => {
+
+        clearInterval(
+            tracking
+        );
+
+
+        landingButterfly
+            .classList
+            .remove(
+                "flying"
+            );
+
+
+        landingButterfly
+            .classList
+            .add(
+                "landed"
+            );
+
+
+        positionButterflyOnCat();
+
+
+        setCatMood(
+            "surprised"
+        );
+
+
+        setTimeout(() => {
+
+            setCatMood(
+                "happy"
+            );
+
+
+            resetCatLook();
+
+        }, 650);
+
+    }, 2850);
+
+}
+
+
+
+/* ==========================================
+   KEEP BUTTERFLY ON CAT
+========================================== */
+
+function positionButterflyOnCat() {
+
+    if (
+        !landingButterfly
+    ) {
+
+        return;
+    }
+
+
+    const catRect =
+        cat.getBoundingClientRect();
+
+
+    const gameRect =
+        game.getBoundingClientRect();
+
+
+    const x =
+
+        catRect.left -
+        gameRect.left +
+
+        catRect.width * 0.46 -
+
+        landingButterfly.offsetWidth / 2;
+
+
+    const y =
+
+        catRect.top -
+        gameRect.top -
+        24;
+
+
+    landingButterfly.style.left =
+        `${x}px`;
+
+
+    landingButterfly.style.top =
+        `${y}px`;
+
+}
+
+
+
+/* ==========================================
+   TAP EFFECT
+========================================== */
+
+function createTapEffect(
+
+    clientX,
+    clientY
+
+) {
+
+    if (!tapLayer) {
+
+        return;
+    }
+
+
+    const gameRect =
+        game.getBoundingClientRect();
+
+
+    const x =
+        clientX -
+        gameRect.left;
+
+
+    const y =
+        clientY -
+        gameRect.top;
+
+
+    const ring =
+        document.createElement(
+            "span"
+        );
+
+
+    ring.className =
+        "tap-ring";
+
+
+    ring.style.left =
+        `${x}px`;
+
+
+    ring.style.top =
+        `${y}px`;
+
+
+    tapLayer.appendChild(
+        ring
+    );
+
+
+    setTimeout(() => {
+
+        ring.remove();
+
+    }, 600);
+
+
+    const icons = [
+
+        "✦",
+        "·",
+        "✧"
+
+    ];
+
+
+    for (
+        let i = 0;
+        i < 3;
+        i++
+    ) {
+
+        const spark =
+            document.createElement(
+                "span"
+            );
+
+
+        spark.className =
+            "tap-spark";
+
+
+        spark.textContent =
+
+            icons[
+                Math.floor(
+                    Math.random() *
+                    icons.length
+                )
+            ];
+
+
+        spark.style.left =
+            `${x}px`;
+
+
+        spark.style.top =
+            `${y}px`;
+
+
+        spark.style.setProperty(
+
+            "--spark-x",
+
+            `${random(-24,24)}px`
+
+        );
+
+
+        spark.style.setProperty(
+
+            "--spark-y",
+
+            `${random(-28,10)}px`
+
+        );
+
+
+        tapLayer.appendChild(
+            spark
+        );
+
+
+        setTimeout(() => {
+
+            spark.remove();
+
+        }, 750);
 
     }
 
@@ -1944,19 +2353,19 @@ function showFinalCard() {
 
 
 /* ==========================================
-   CAT LOOK SYSTEM
+   GAME TAP
+   CAT LOOK
 ========================================== */
 
 game.addEventListener(
     "pointerdown",
     event => {
 
-        if (!started) return;
+        if (!started) {
 
+            return;
+        }
 
-        /*
-         * Tap visual
-         */
 
         createTapEffect(
             event.clientX,
@@ -1972,10 +2381,6 @@ game.addEventListener(
         }
 
 
-        /*
-         * Cat looks at touch
-         */
-
         lookAtPoint(
             event.clientX,
             event.clientY
@@ -1984,6 +2389,11 @@ game.addEventListener(
     }
 );
 
+
+
+/* ==========================================
+   CAT LOOK SYSTEM
+========================================== */
 
 function lookAtPoint(
 
@@ -2008,11 +2418,13 @@ function lookAtPoint(
 
 
     const catCenterX =
+
         catRect.left +
         catRect.width / 2;
 
 
     const catCenterY =
+
         catRect.top +
         catRect.height / 2;
 
@@ -2059,14 +2471,20 @@ function lookAtPoint(
             eye => {
 
                 eye.style.setProperty(
+
                     "--look-x",
+
                     `${eyeX}px`
+
                 );
 
 
                 eye.style.setProperty(
+
                     "--look-y",
+
                     `${eyeY}px`
+
                 );
 
             }
@@ -2082,8 +2500,11 @@ function lookAtPoint(
     if (head) {
 
         head.style.setProperty(
+
             "--head-look",
+
             `${headRotate}deg`
+
         );
 
     }
@@ -2130,14 +2551,20 @@ function resetCatLook() {
             eye => {
 
                 eye.style.setProperty(
+
                     "--look-x",
+
                     "0px"
+
                 );
 
 
                 eye.style.setProperty(
+
                     "--look-y",
+
                     "0px"
+
                 );
 
             }
@@ -2153,8 +2580,11 @@ function resetCatLook() {
     if (head) {
 
         head.style.setProperty(
+
             "--head-look",
+
             "0deg"
+
         );
 
     }
@@ -2171,13 +2601,28 @@ game.addEventListener(
     "pointerdown",
     event => {
 
-        if (!started) return;
+        if (!started) {
 
-        if (isBusy) return;
+            return;
+        }
 
-        if (gameFinished) return;
 
-        if (nearReactionCooldown) return;
+        if (isBusy) {
+
+            return;
+        }
+
+
+        if (gameFinished) {
+
+            return;
+        }
+
+
+        if (nearReactionCooldown) {
+
+            return;
+        }
 
 
         const rect =
@@ -2185,11 +2630,13 @@ game.addEventListener(
 
 
         const centerX =
+
             rect.left +
             rect.width / 2;
 
 
         const centerY =
+
             rect.top +
             rect.height / 2;
 
@@ -2266,10 +2713,153 @@ game.addEventListener(
 
 
 /* ==========================================
+   MISS REACTION
+========================================== */
+
+game.addEventListener(
+    "pointerdown",
+    event => {
+
+        if (!started) {
+
+            return;
+        }
+
+
+        if (isBusy) {
+
+            return;
+        }
+
+
+        if (gameFinished) {
+
+            return;
+        }
+
+
+        const catRect =
+            cat.getBoundingClientRect();
+
+
+        /*
+         * Bấm trúng mèo thì không tính miss.
+         */
+
+        if (
+
+            event.clientX >=
+            catRect.left &&
+
+            event.clientX <=
+            catRect.right &&
+
+            event.clientY >=
+            catRect.top &&
+
+            event.clientY <=
+            catRect.bottom
+
+        ) {
+
+            return;
+        }
+
+
+        const centerX =
+
+            catRect.left +
+            catRect.width / 2;
+
+
+        const centerY =
+
+            catRect.top +
+            catRect.height / 2;
+
+
+        const dx =
+            event.clientX -
+            centerX;
+
+
+        const dy =
+            event.clientY -
+            centerY;
+
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+
+        /*
+         * Vùng gần do Near Reaction xử lý.
+         */
+
+        if (
+            distance < 125
+        ) {
+
+            return;
+        }
+
+
+        missCount++;
+
+
+        /*
+         * 3 lần hụt mới trêu.
+         */
+
+        if (
+            missCount % 3 !== 0
+        ) {
+
+            return;
+        }
+
+
+        setCatMood(
+            "smug"
+        );
+
+
+        showSpeech(
+            "Ở đây nè 😼",
+            900
+        );
+
+
+        setTimeout(() => {
+
+            if (
+                !isBusy &&
+                !gameFinished
+            ) {
+
+                setCatMood(
+                    "cheeky"
+                );
+
+            }
+
+        }, 950);
+
+    }
+);
+
+
+
+/* ==========================================
    CAT MOOD
 ========================================== */
 
-function setCatMood(mood) {
+function setCatMood(
+    mood
+) {
 
     CAT_MOODS.forEach(
         className => {
@@ -2291,7 +2881,7 @@ function setCatMood(mood) {
 
 
 /* ==========================================
-   CAT POSITION - PERCENT
+   CAT POSITION %
 ========================================== */
 
 function setCatPosition(
@@ -2318,6 +2908,7 @@ function setCatPosition(
 
 
     const maxX =
+
         rect.width -
         catWidth -
         10;
@@ -2328,12 +2919,14 @@ function setCatPosition(
 
 
     const maxY =
+
         rect.height -
         catHeight -
         55;
 
 
     let x =
+
         rect.width *
         (
             xPercent / 100
@@ -2341,6 +2934,7 @@ function setCatPosition(
 
 
     let y =
+
         rect.height *
         (
             yPercent / 100
@@ -2370,17 +2964,12 @@ function setCatPosition(
     cat.style.top =
         `${y}px`;
 
-
-    followSpeechDuringMotion(
-        600
-    );
-
 }
 
 
 
 /* ==========================================
-   CAT POSITION - PIXEL
+   CAT POSITION PIXELS
 ========================================== */
 
 function setCatPixelPosition(
@@ -2404,21 +2993,29 @@ function setCatPixelPosition(
 
     const safeX =
         clamp(
+
             x,
+
             10,
+
             rect.width -
             catWidth -
             10
+
         );
 
 
     const safeY =
         clamp(
+
             y,
+
             90,
+
             rect.height -
             catHeight -
             50
+
         );
 
 
@@ -2428,50 +3025,6 @@ function setCatPixelPosition(
 
     cat.style.top =
         `${safeY}px`;
-
-
-    followSpeechDuringMotion(
-        600
-    );
-
-}
-
-
-
-/* ==========================================
-   SPEECH FOLLOW
-========================================== */
-
-function followSpeechDuringMotion(
-    duration = 600
-) {
-
-    const start =
-        performance.now();
-
-
-    function frame(now) {
-
-        updateSpeechPosition();
-
-
-        if (
-            now - start <
-            duration
-        ) {
-
-            requestAnimationFrame(
-                frame
-            );
-
-        }
-
-    }
-
-
-    requestAnimationFrame(
-        frame
-    );
 
 }
 
@@ -2500,6 +3053,7 @@ function getSafeRandomPosition() {
                 )
         },
 
+
         {
 
             x:
@@ -2514,6 +3068,7 @@ function getSafeRandomPosition() {
                     61
                 )
         },
+
 
         {
 
@@ -2530,6 +3085,7 @@ function getSafeRandomPosition() {
                 )
         },
 
+
         {
 
             x:
@@ -2544,6 +3100,7 @@ function getSafeRandomPosition() {
                     70
                 )
         },
+
 
         {
 
@@ -2564,10 +3121,12 @@ function getSafeRandomPosition() {
 
 
     return positions[
+
         Math.floor(
             Math.random() *
             positions.length
         )
+
     ];
 
 }
@@ -2579,26 +3138,33 @@ function getSafeRandomPosition() {
 ========================================== */
 
 function showSpeech(
+
     text,
     duration = 1700
+
 ) {
 
     clearTimeout(
         showSpeech.timer
     );
 
+
     speech.textContent =
         text;
+
 
     speech.classList.remove(
         "hidden"
     );
 
+
     speech.classList.add(
         "show"
     );
 
+
     startSpeechFollow();
+
 
     showSpeech.timer =
         setTimeout(() => {
@@ -2606,6 +3172,7 @@ function showSpeech(
             hideSpeech();
 
         }, duration);
+
 }
 
 
@@ -2620,16 +3187,26 @@ function hideSpeech() {
         showSpeech.timer
     );
 
+
     speech.classList.remove(
         "show"
     );
+
 
     speech.classList.add(
         "hidden"
     );
 
+
     stopSpeechFollow();
+
 }
+
+
+
+/* ==========================================
+   SPEECH FOLLOW
+========================================== */
 
 function startSpeechFollow() {
 
@@ -2647,6 +3224,7 @@ function startSpeechFollow() {
             speechFollowFrame =
                 null;
 
+
             return;
         }
 
@@ -2658,6 +3236,7 @@ function startSpeechFollow() {
             requestAnimationFrame(
                 follow
             );
+
     }
 
 
@@ -2665,8 +3244,14 @@ function startSpeechFollow() {
         requestAnimationFrame(
             follow
         );
+
 }
 
+
+
+/* ==========================================
+   STOP SPEECH FOLLOW
+========================================== */
 
 function stopSpeechFollow() {
 
@@ -2678,16 +3263,18 @@ function stopSpeechFollow() {
             speechFollowFrame
         );
 
+
         speechFollowFrame =
             null;
+
     }
+
 }
 
 
 
 /* ==========================================
    SPEECH POSITION
-   ALWAYS ABOVE CAT
 ========================================== */
 
 function updateSpeechPosition() {
@@ -2721,15 +3308,20 @@ function updateSpeechPosition() {
 
 
     let left =
+
         catRect.left -
         gameRect.left +
+
         catRect.width / 2 -
+
         speechWidth / 2;
 
 
     let top =
+
         catRect.top -
         gameRect.top -
+
         speechHeight -
         16;
 
@@ -2740,11 +3332,15 @@ function updateSpeechPosition() {
 
     left =
         clamp(
+
             left,
+
             padding,
+
             gameRect.width -
             speechWidth -
             padding
+
         );
 
 
@@ -2772,7 +3368,10 @@ function updateSpeechPosition() {
 
 function startPetals() {
 
-    if (petalRunning) return;
+    if (petalRunning) {
+
+        return;
+    }
 
 
     petalRunning =
@@ -2785,9 +3384,16 @@ function startPetals() {
 
 
 
+/* ==========================================
+   SCHEDULE PETAL
+========================================== */
+
 function schedulePetal() {
 
-    if (!petalRunning) return;
+    if (!petalRunning) {
+
+        return;
+    }
 
 
     clearTimeout(
@@ -2816,9 +3422,16 @@ function schedulePetal() {
 
 
 
+/* ==========================================
+   SPAWN PETAL
+========================================== */
+
 function spawnPetal() {
 
-    if (!petalLayer) return;
+    if (!petalLayer) {
+
+        return;
+    }
 
 
     const existing =
@@ -2827,7 +3440,9 @@ function spawnPetal() {
         );
 
 
-    if (existing.length >= 4) {
+    if (
+        existing.length >= 4
+    ) {
 
         return;
     }
@@ -2848,29 +3463,41 @@ function spawnPetal() {
 
 
     petal.style.setProperty(
+
         "--petal-scale",
+
         random(
             0.65,
             1.05
         )
+
     );
 
 
     petal.style.setProperty(
+
         "--petal-x1",
+
         `${random(-45,55)}px`
+
     );
 
 
     petal.style.setProperty(
+
         "--petal-x2",
+
         `${random(-65,75)}px`
+
     );
 
 
     petal.style.setProperty(
+
         "--petal-x3",
+
         `${random(-90,100)}px`
+
     );
 
 
@@ -2882,8 +3509,11 @@ function spawnPetal() {
 
 
     petal.style.setProperty(
+
         "--petal-duration",
+
         `${duration}ms`
+
     );
 
 
@@ -2903,7 +3533,7 @@ function spawnPetal() {
 
 
 /* ==========================================
-   PARTICLES
+   DUST
 ========================================== */
 
 function createDust() {
@@ -2917,12 +3547,15 @@ function createDust() {
 
 
     const x =
+
         catRect.left -
         gameRect.left +
+
         catRect.width / 2;
 
 
     const y =
+
         catRect.bottom -
         gameRect.top -
         10;
@@ -2938,6 +3571,10 @@ function createDust() {
 
 
 
+/* ==========================================
+   GIFT DUST
+========================================== */
+
 function createGiftDust() {
 
     const giftRect =
@@ -2949,12 +3586,15 @@ function createGiftDust() {
 
 
     const x =
+
         giftRect.left -
         gameRect.left +
+
         giftRect.width / 2;
 
 
     const y =
+
         giftRect.bottom -
         gameRect.top;
 
@@ -2968,6 +3608,10 @@ function createGiftDust() {
 }
 
 
+
+/* ==========================================
+   SPAWN DUST
+========================================== */
 
 function spawnDust(
 
@@ -3017,14 +3661,20 @@ function spawnDust(
 
 
         dust.style.setProperty(
+
             "--dx",
+
             `${random(-48,48)}px`
+
         );
 
 
         dust.style.setProperty(
+
             "--dy",
+
             `${random(-32,14)}px`
+
         );
 
 
@@ -3049,7 +3699,9 @@ function spawnDust(
    CONFETTI
 ========================================== */
 
-function createConfetti(amount) {
+function createConfetti(
+    amount
+) {
 
     const colors = [
 
@@ -3105,6 +3757,7 @@ function createConfetti(amount) {
 
 
         piece.style.background =
+
             colors[
                 Math.floor(
                     Math.random() *
@@ -3122,26 +3775,38 @@ function createConfetti(amount) {
 
 
         piece.style.setProperty(
+
             "--x",
+
             `${random(-150,150)}px`
+
         );
 
 
         piece.style.setProperty(
+
             "--x2",
+
             `${random(-210,210)}px`
+
         );
 
 
         piece.style.setProperty(
+
             "--up",
+
             `${random(-240,-110)}px`
+
         );
 
 
         piece.style.setProperty(
+
             "--down",
+
             `${random(90,290)}px`
+
         );
 
 
@@ -3153,8 +3818,11 @@ function createConfetti(amount) {
 
 
         piece.style.setProperty(
+
             "--duration",
+
             `${duration}ms`
+
         );
 
 
@@ -3190,14 +3858,18 @@ function createMagicStars() {
 
 
     const originX =
+
         giftRect.left -
         gameRect.left +
+
         giftRect.width / 2;
 
 
     const originY =
+
         giftRect.top -
         gameRect.top +
+
         giftRect.height / 2;
 
 
@@ -3229,6 +3901,7 @@ function createMagicStars() {
 
 
         star.textContent =
+
             icons[
                 Math.floor(
                     Math.random() *
@@ -3250,14 +3923,20 @@ function createMagicStars() {
 
 
         star.style.setProperty(
+
             "--sx",
+
             `${random(-155,155)}px`
+
         );
 
 
         star.style.setProperty(
+
             "--sy",
+
             `${random(-210,-55)}px`
+
         );
 
 
@@ -3282,17 +3961,102 @@ function createMagicStars() {
    AUDIO SYSTEM
 ========================================== */
 
-function unlockAudio() {
+function startBGM() {
 
-    audioUnlocked =
-        true;
+    if (!bgm) {
+
+        return;
+    }
 
 
-    startBGM();
+    if (!soundEnabled) {
+
+        return;
+    }
+
+
+    bgm.volume =
+        BGM_VOLUME_NORMAL;
+
+
+    if (
+        !bgm.paused
+    ) {
+
+        audioUnlocked =
+            true;
+
+
+        return;
+    }
+
+
+    const promise =
+        bgm.play();
+
+
+    if (
+        promise &&
+        typeof promise.then ===
+        "function"
+    ) {
+
+        promise
+            .then(() => {
+
+                audioUnlocked =
+                    true;
+
+            })
+            .catch(error => {
+
+                console.warn(
+                    "BGM play failed:",
+                    error
+                );
+
+            });
+
+    }
 
 }
 
 
+
+/* ==========================================
+   SET BGM VOLUME
+========================================== */
+
+function setBGMVolume(
+    volume
+) {
+
+    if (!bgm) {
+
+        return;
+    }
+
+
+    if (!soundEnabled) {
+
+        return;
+    }
+
+
+    bgm.volume =
+        clamp(
+            volume,
+            0,
+            1
+        );
+
+}
+
+
+
+/* ==========================================
+   PLAY SFX
+========================================== */
 
 function playSFX(
 
@@ -3301,9 +4065,16 @@ function playSFX(
 
 ) {
 
-    if (!soundEnabled) return;
+    if (!soundEnabled) {
 
-    if (!audio) return;
+        return;
+    }
+
+
+    if (!audio) {
+
+        return;
+    }
 
 
     try {
@@ -3319,15 +4090,27 @@ function playSFX(
             volume;
 
 
-        audio.play().catch(
-            () => {}
-        );
+        const promise =
+            audio.play();
+
+
+        if (
+            promise &&
+            typeof promise.catch ===
+            "function"
+        ) {
+
+            promise.catch(
+                () => {}
+            );
+
+        }
 
     }
 
     catch (error) {
 
-        // Ignore unavailable audio files.
+        // Không làm game dừng nếu SFX lỗi.
 
     }
 
@@ -3344,10 +4127,6 @@ function toggleSound() {
     soundEnabled =
         !soundEnabled;
 
-
-    /*
-     * SOUND ON
-     */
 
     if (soundEnabled) {
 
@@ -3368,11 +4147,6 @@ function toggleSound() {
 
     }
 
-
-    /*
-     * SOUND OFF
-     */
-
     else {
 
         soundButton.textContent =
@@ -3391,59 +4165,6 @@ function toggleSound() {
         }
 
     }
-
-}
-
-/* ==========================================
-   START BGM
-========================================== */
-
-function startBGM() {
-
-    if (!bgm) {
-
-        return;
-    }
-
-
-    if (!soundEnabled) {
-
-        return;
-    }
-
-
-    bgm.volume =
-        0.42;
-
-
-    /*
-     * Nếu đang chạy rồi
-     * thì không restart bài nhạc.
-     */
-
-    if (
-        !bgm.paused
-    ) {
-
-        return;
-    }
-
-
-    bgm.play()
-        .then(() => {
-
-            audioUnlocked =
-                true;
-
-        })
-        .catch(error => {
-
-            console.warn(
-                "BGM play failed:",
-                error
-            );
-
-        });
 
 }
 
@@ -3470,7 +4191,7 @@ soundButton.addEventListener(
 
 
 /* ==========================================
-   SHAKE
+   SCREEN SHAKE
 ========================================== */
 
 function shakeScreen() {
@@ -3504,7 +4225,9 @@ function shakeScreen() {
    VIBRATION
 ========================================== */
 
-function vibrate(pattern) {
+function vibrate(
+    pattern
+) {
 
     if (
         "vibrate" in navigator
@@ -3513,6 +4236,7 @@ function vibrate(pattern) {
         navigator.vibrate(
             pattern
         );
+
     }
 
 }
@@ -3520,7 +4244,7 @@ function vibrate(pattern) {
 
 
 /* ==========================================
-   HINT
+   HIDE HINT
 ========================================== */
 
 function hideHint() {
@@ -3539,549 +4263,36 @@ function hideHint() {
 
 
 /* ==========================================
-   REPLAY
+   INTERACTION GUARD
 ========================================== */
 
-replayButton.addEventListener(
-    "pointerdown",
-    event => {
-
-        event.preventDefault();
-
-        event.stopPropagation();
-
-
-        location.reload();
-
-    }
-);
-
-
-
-/* ==========================================
-   HELPERS
-========================================== */
-
-function random(
-
-    min,
-    max
-
+function allowInteraction(
+    delay = 180
 ) {
 
-    return (
-        Math.random() *
-        (
-            max -
-            min
-        ) +
-        min
-    );
+    const now =
+        performance.now();
 
-}
-
-
-
-function clamp(
-
-    value,
-    min,
-    max
-
-) {
-
-    return Math.min(
-        Math.max(
-            value,
-            min
-        ),
-        max
-    );
-
-}
-
-
-
-/* ==========================================
-   RESIZE
-========================================== */
-
-let resizeTimer =
-    null;
-
-
-window.addEventListener(
-    "resize",
-    () => {
-
-        clearTimeout(
-            resizeTimer
-        );
-
-
-        resizeTimer =
-            setTimeout(() => {
-
-                updateSpeechPosition();
-
-
-                /*
-                 * Nếu butterfly đã đáp
-                 * thì căn lại theo mèo.
-                 */
-
-                if (
-                    landingButterfly &&
-                    landingButterfly
-                        .classList
-                        .contains(
-                            "landed"
-                        )
-                ) {
-
-                    positionButterflyOnCat();
-
-                }
-
-            }, 120);
-
-    }
-);
-
-
-
-window.addEventListener(
-    "orientationchange",
-    () => {
-
-        setTimeout(() => {
-
-            updateSpeechPosition();
-
-        }, 250);
-
-    }
-
-);
-
-/* ==========================================
-   TAP EFFECT
-========================================== */
-
-function createTapEffect(
-    clientX,
-    clientY
-) {
-
-    if (!tapLayer) return;
-
-
-    const gameRect =
-        game.getBoundingClientRect();
-
-
-    const x =
-        clientX -
-        gameRect.left;
-
-
-    const y =
-        clientY -
-        gameRect.top;
-
-
-    /*
-     * Ring
-     */
-
-    const ring =
-        document.createElement(
-            "span"
-        );
-
-
-    ring.className =
-        "tap-ring";
-
-
-    ring.style.left =
-        `${x}px`;
-
-
-    ring.style.top =
-        `${y}px`;
-
-
-    tapLayer.appendChild(
-        ring
-    );
-
-
-    setTimeout(() => {
-
-        ring.remove();
-
-    }, 600);
-
-
-    /*
-     * Tiny sparks
-     */
-
-    const icons = [
-        "✦",
-        "·",
-        "✧"
-    ];
-
-
-    for (
-        let i = 0;
-        i < 3;
-        i++
-    ) {
-
-        const spark =
-            document.createElement(
-                "span"
-            );
-
-
-        spark.className =
-            "tap-spark";
-
-
-        spark.textContent =
-            icons[
-                Math.floor(
-                    Math.random() *
-                    icons.length
-                )
-            ];
-
-
-        spark.style.left =
-            `${x}px`;
-
-
-        spark.style.top =
-            `${y}px`;
-
-
-        spark.style.setProperty(
-            "--spark-x",
-            `${random(-24,24)}px`
-        );
-
-
-        spark.style.setProperty(
-            "--spark-y",
-            `${random(-28,10)}px`
-        );
-
-
-        tapLayer.appendChild(
-            spark
-        );
-
-
-        setTimeout(() => {
-
-            spark.remove();
-
-        }, 750);
-
-    }
-
-}
-
-/* ==========================================
-   MISS REACTION
-========================================== */
-
-game.addEventListener(
-    "pointerdown",
-    event => {
-
-        if (!started) return;
-
-        if (isBusy) return;
-
-        if (gameFinished) return;
-
-
-        const catRect =
-            cat.getBoundingClientRect();
-
-            const centerX =
-    catRect.left +
-    catRect.width / 2;
-
-
-const centerY =
-    catRect.top +
-    catRect.height / 2;
-
-
-const dx =
-    event.clientX -
-    centerX;
-
-
-const dy =
-    event.clientY -
-    centerY;
-
-
-const distance =
-    Math.sqrt(
-        dx * dx +
-        dy * dy
-    );
-
-
-/*
- * Near reaction sẽ xử lý vùng này.
- */
-
-if (
-    distance < 125
-) {
-
-    return;
-}
-
-
-        /*
-         * Nếu chạm ngay vào mèo
-         * thì bỏ qua.
-         */
-
-        if (
-            event.clientX >=
-                catRect.left &&
-
-            event.clientX <=
-                catRect.right &&
-
-            event.clientY >=
-                catRect.top &&
-
-            event.clientY <=
-                catRect.bottom
-        ) {
-
-            return;
-        }
-
-
-        missCount++;
-
-
-        /*
-         * Không nói mỗi lần chạm.
-         *
-         * Cứ 3 lần hụt mới trêu một câu.
-         */
-
-        if (
-            missCount % 3 !== 0
-        ) {
-
-            return;
-        }
-
-
-        setCatMood(
-            "smug"
-        );
-
-
-        showSpeech(
-            "Ở đây nè 😼",
-            900
-        );
-
-
-        setTimeout(() => {
-
-            if (
-                !isBusy &&
-                !gameFinished
-            ) {
-
-                setCatMood(
-                    "cheeky"
-                );
-
-            }
-
-        }, 950);
-
-    }
-);
-
-/* ==========================================
-   BUTTERFLY LANDS ON CAT
-========================================== */
-
-function butterflyLandOnCat() {
 
     if (
-        !landingButterfly
+        now -
+        lastInteractionTime <
+        delay
     ) {
 
-        return;
+        return false;
     }
 
 
-    /*
-     * Start outside screen
-     */
-
-    const gameRect =
-        game.getBoundingClientRect();
+    lastInteractionTime =
+        now;
 
 
-    landingButterfly.classList.remove(
-        "hidden",
-        "landed",
-        "flying"
-    );
-
-
-    landingButterfly.style.left =
-        `${gameRect.width + 50}px`;
-
-
-    landingButterfly.style.top =
-        `${gameRect.height * 0.25}px`;
-
-
-    landingButterfly.style.transform =
-        "rotate(-15deg) scale(0.75)";
-
-
-    void landingButterfly.offsetWidth;
-
-
-    landingButterfly.classList.add(
-        "flying"
-    );
-
-
-    /*
-     * Target = top of cat head
-     */
-
-    requestAnimationFrame(() => {
-
-        const catRect =
-            cat.getBoundingClientRect();
-
-
-        const currentGameRect =
-            game.getBoundingClientRect();
-
-
-        const targetX =
-            catRect.left -
-            currentGameRect.left +
-            catRect.width * 0.46 -
-            landingButterfly.offsetWidth / 2;
-
-
-        const targetY =
-            catRect.top -
-            currentGameRect.top -
-            24;
-
-
-        landingButterfly.style.left =
-            `${targetX}px`;
-
-
-        landingButterfly.style.top =
-            `${targetY}px`;
-
-
-        landingButterfly.style.transform =
-            "rotate(2deg) scale(0.72)";
-
-    });
-
-
-    /*
-     * Cat watches butterfly
-     */
-
-    const tracking =
-        setInterval(() => {
-
-            const rect =
-                landingButterfly
-                    .getBoundingClientRect();
-
-
-            lookAtPoint(
-
-                rect.left +
-                rect.width / 2,
-
-                rect.top +
-                rect.height / 2,
-
-                false
-
-            );
-
-        }, 80);
-
-
-    /*
-     * Land
-     */
-
-    setTimeout(() => {
-
-        clearInterval(
-            tracking
-        );
-
-
-        landingButterfly
-            .classList
-            .remove(
-                "flying"
-            );
-
-
-        landingButterfly
-            .classList
-            .add(
-                "landed"
-            );
-
-
-        setCatMood(
-            "surprised"
-        );
-
-
-        setTimeout(() => {
-
-            setCatMood(
-                "happy"
-            );
-
-
-            resetCatLook();
-
-        }, 650);
-
-    }, 2850);
+    return true;
 
 }
+
+
 
 /* ==========================================
    NETWORK STATUS
@@ -4089,10 +4300,15 @@ function butterflyLandOnCat() {
 
 function updateNetworkStatus() {
 
-    if (!offlineNotice) return;
+    if (!offlineNotice) {
+
+        return;
+    }
 
 
-    if (navigator.onLine) {
+    if (
+        navigator.onLine
+    ) {
 
         offlineNotice.classList.remove(
             "show"
@@ -4123,90 +4339,6 @@ window.addEventListener(
 );
 
 
-updateNetworkStatus();
-
-/* ==========================================
-   PRELOAD AUDIO
-========================================== */
-
-const AUDIO_FILES = [
-
-    bgm,
-
-    sfxPop,
-
-    sfxRun,
-
-    sfxSlip,
-
-    sfxBoing,
-
-    sfxGiftDrop,
-
-    sfxSparkle,
-
-    sfxButterfly
-
-];
-
-
-function preloadAudio() {
-
-    AUDIO_FILES.forEach(
-        audio => {
-
-            if (!audio) return;
-
-
-            try {
-
-                audio.load();
-
-            }
-
-            catch (error) {
-
-                // Không ảnh hưởng game.
-
-            }
-
-        }
-    );
-
-}
-
-preloadAudio();
-
-/* ==========================================
-   TAP GUARD
-========================================== */
-
-function allowInteraction(
-    delay = 180
-) {
-
-    const now =
-        performance.now();
-
-
-    if (
-        now -
-        lastInteractionTime <
-        delay
-    ) {
-
-        return false;
-
-    }
-
-
-    lastInteractionTime =
-        now;
-
-
-    return true;
-
-}
 
 /* ==========================================
    PAGE VISIBILITY
@@ -4216,12 +4348,11 @@ document.addEventListener(
     "visibilitychange",
     () => {
 
-        if (!bgm) return;
+        if (!bgm) {
 
+            return;
+        }
 
-        /*
-         * Người dùng rời khỏi trang
-         */
 
         if (
             document.hidden
@@ -4229,18 +4360,17 @@ document.addEventListener(
 
             bgm.pause();
 
+
             return;
         }
 
 
-        /*
-         * Quay lại trang
-         */
-
         if (
+
             started &&
             soundEnabled &&
             audioUnlocked
+
         ) {
 
             bgm.play().catch(
@@ -4252,41 +4382,161 @@ document.addEventListener(
     }
 );
 
+
+
 /* ==========================================
-   POSITION BUTTERFLY ON CAT
+   REPLAY
 ========================================== */
 
-function positionButterflyOnCat() {
+replayButton.addEventListener(
+    "click",
+    event => {
 
-    if (!landingButterfly) return;
+        event.preventDefault();
 
-
-    const catRect =
-        cat.getBoundingClientRect();
-
-
-    const gameRect =
-        game.getBoundingClientRect();
+        event.stopPropagation();
 
 
-    const x =
-        catRect.left -
-        gameRect.left +
-        catRect.width * 0.46 -
-        landingButterfly.offsetWidth / 2;
+        location.reload();
+
+    }
+);
 
 
-    const y =
-        catRect.top -
-        gameRect.top -
-        24;
+
+/* ==========================================
+   RESIZE
+========================================== */
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        clearTimeout(
+            resizeTimer
+        );
 
 
-    landingButterfly.style.left =
-        `${x}px`;
+        resizeTimer =
+            setTimeout(() => {
+
+                updateSpeechPosition();
 
 
-    landingButterfly.style.top =
-        `${y}px`;
+                if (
+
+                    landingButterfly &&
+
+                    landingButterfly
+                        .classList
+                        .contains(
+                            "landed"
+                        )
+
+                ) {
+
+                    positionButterflyOnCat();
+
+                }
+
+            }, 120);
+
+    }
+);
+
+
+
+/* ==========================================
+   ORIENTATION CHANGE
+========================================== */
+
+window.addEventListener(
+    "orientationchange",
+    () => {
+
+        setTimeout(() => {
+
+            updateSpeechPosition();
+
+
+            if (
+
+                landingButterfly &&
+
+                landingButterfly
+                    .classList
+                    .contains(
+                        "landed"
+                    )
+
+            ) {
+
+                positionButterflyOnCat();
+
+            }
+
+        }, 300);
+
+    }
+);
+
+
+
+/* ==========================================
+   HELPERS
+========================================== */
+
+function random(
+
+    min,
+    max
+
+) {
+
+    return (
+
+        Math.random() *
+        (
+            max -
+            min
+        ) +
+
+        min
+
+    );
 
 }
+
+
+
+function clamp(
+
+    value,
+    min,
+    max
+
+) {
+
+    return Math.min(
+
+        Math.max(
+            value,
+            min
+        ),
+
+        max
+
+    );
+
+}
+
+
+
+/* ==========================================
+   INITIALIZE
+========================================== */
+
+preloadAudio();
+
+
+updateNetworkStatus();
